@@ -1,0 +1,89 @@
+scp dev-dsk-jliangmd-2b-8777125b.us-west-2.amazon.com:/usr/share/dcv/cdd/dcv-cdd.py /home/ANT.AMAZON.COM/jliangmd/dcv/
+
+
+# GUI
+python3 ./dcv-cdd.py connect dev-dsk-jliangmd-2b-8c262393.us-west-2.amazon.com
+python3 ./dcv-cdd.py connect dev-dsk-jliangmd-2b-81f1f25b.us-west-2.amazon.com
+python3 ./dcv-cdd.py connect dev-dsk-jliangmd-2b-57b01447.us-west-2.amazon.com
+python3 ./dcv-cdd.py connect dev-dsk-jliangmd-2b-8777125b.us-west-2.amazon.com
+
+
+# COPY CODE
+scp -r /home/ANT.AMAZON.COM/jliangmd/Downloads/gsdo dev-dsk-jliangmd-2b-8c262393.us-west-2.amazon.com:/local/home/jliangmd/Documents/
+scp -r /home/ANT.AMAZON.COM/jliangmd/Downloads/gsdo dev-dsk-jliangmd-2b-81f1f25b.us-west-2.amazon.com:/local/home/jliangmd/Documents/
+scp -r /home/ANT.AMAZON.COM/jliangmd/Downloads/gsdo dev-dsk-jliangmd-2b-57b01447.us-west-2.amazon.com:/local/home/jliangmd/Documents/
+scp -r /home/ANT.AMAZON.COM/jliangmd/Downloads/gsdo dev-dsk-jliangmd-2b-8777125b.us-west-2.amazon.com:/local/home/jliangmd/Documents/
+
+
+# COPY DATA
+scp -r /home/ANT.AMAZON.COM/jliangmd/Documents/dataset/NYU_dataset dev-dsk-jliangmd-2b-8c262393.us-west-2.amazon.com:/local/home/jliangmd/Documents/dataset/
+scp -r /home/ANT.AMAZON.COM/jliangmd/Documents/dataset/NYU_dataset dev-dsk-jliangmd-2b-81f1f25b.us-west-2.amazon.com:/local/home/jliangmd/Documents/dataset/
+scp -r /home/ANT.AMAZON.COM/jliangmd/Documents/dataset/NYU_dataset dev-dsk-jliangmd-2b-57b01447.us-west-2.amazon.com:/local/home/jliangmd/Documents/dataset/
+scp -r /home/ANT.AMAZON.COM/jliangmd/Documents/dataset/NYU_dataset dev-dsk-jliangmd-2b-8777125b.us-west-2.amazon.com:/local/home/jliangmd/Documents/dataset/
+
+
+# COPY MODEL
+scp -r dev-dsk-jliangmd-2b-8c262393.us-west-2.amazon.com:/local/home/jliangmd/Documents/results /home/ANT.AMAZON.COM/jliangmd/Documents/
+scp -r dev-dsk-jliangmd-2b-81f1f25b.us-west-2.amazon.com:/local/home/jliangmd/Documents/results /home/ANT.AMAZON.COM/jliangmd/Documents/
+scp -r dev-dsk-jliangmd-2b-57b01447.us-west-2.amazon.com:/local/home/jliangmd/Documents/results /home/ANT.AMAZON.COM/jliangmd/Documents/
+scp -r dev-dsk-jliangmd-2b-8777125b.us-west-2.amazon.com:/local/home/jliangmd/Documents/results /home/ANT.AMAZON.COM/jliangmd/Documents/
+
+scp -r dev-dsk-jliangmd-2b-8c262393.us-west-2.amazon.com:/local/home/jliangmd/Documents/gsdo/results/*.tar /home/ANT.AMAZON.COM/jliangmd/Documents/
+
+# RUN PROJECT:
+### prepare data
+python3 preprocess_data.py --data_root="/root/dataset" --data_config="data/semantic_kitti/semantic-kitti.yaml" --batch=5 --index=0
+
+### pretrain
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="checkpoints/t_rsnapshot.pth.tar"  --data_cfg="data/semantic_kitti/semantic-kitti.yaml" --only_load_model --evaluation_freq=5 --data_root="/root/dataset" --name="t_r_best_retrain_s1" --scheduler=1
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="step_t_r_retrainsnapshot.pth.tar" --only_load_model --evaluation_freq=5 --data_root="/root/dataset" --name="t_r_retrain_s2_" --scheduler=2
+
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="checkpoints/processed_voxformer_kitti.pth" --only_load_model --evaluation_freq=5 --data_root="/root/dataset" --name="step_t_r_double" --double
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=3 --baseline_type=1 --snapshot="./step_3d_r_retrainsnapshot.pth.tar" --evaluation_freq=5 --data_root="/root/dataset" --name="step_3d_r_retrain"
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=1 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="checkpoints/nyu_trsnapshot.pth.tar" --only_load_model --evaluation_freq=5 --data_cfg="data/nyu/nyu.yaml" --scheduler=1 --data_root="/root/dataset" --name="nyu_tr_retrain"
+
+
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=4 --baseline_type=1 --snapshot="checkpoints/processed_voxformer_kitti.pth" --only_load_model --evaluation_freq=5 --data_root="/root/dataset" --name="step_cvae_voxformer"
+# IF IT DOESN"T WORK< TRY AGAIN WITH SMALLER TRIPLANE DIM
+
+
+
+
+1. add the positional encoding in cross attention
+2. add residual info to prediction head
+
+
+scp -r /home/ANT.AMAZON.COM/jliangmd/Documents/dataset/data_odometry_calib.zip dev-dsk-jliangmd-2b-57b01447.us-west-2.amazon.com:/home/jliangmd/Downloads/
+
+--data_type=0 --batch_size=1 --model_type=3 --baseline_type=1 --snapshot="" --evaluation_freq=5 --name="3d_r" --no_log
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=1 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="checkpoints/voxformer_nyu.pth" --only_load_model --evaluation_freq=5 --data_cfg="data/nyu/nyu.yaml" --data_root="/home/jliangmd/Documents/dataset" --name="nyu_tr" --no_log
+
+
+
+
+archived:
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --evaluation_freq=5 --data_root="/root/dataset" --name="t_r_multiply_scratch"
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="checkpoints/snapshot.pth.tar" --evaluation_freq=5 --data_root="/root/dataset" --no_residual --only_load_model --name="t_nr"
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="" --evaluation_freq=5 --data_root="/root/dataset" --no_residual --only_load_model --no_occ_loss --name="t_nr_nocc"
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=3 --baseline_type=1 --snapshot="" --evaluation_freq=5 --data_root="/root/dataset" --name="3d_r_step" --scheduler=0
+
+python3 -m torch.distributed.launch --nproc_per_node=8 main.py --data_type=0 --batch_size=1 --model_type=2 --baseline_type=1 --snapshot="checkpoints/snapshot.pth.tar" --evaluation_freq=5 --data_root="/root/dataset" --only_load_model --no_occ_loss --name="t_r_nocc"
+
+
+
+
+
+
+
+
+1: nyu reverse transformation
+3: nyu current transformation
