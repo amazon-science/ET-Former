@@ -99,8 +99,8 @@ If this work is helpful for your research, please cite the following BibTeX entr
 
 ```
 @inproceedings{liang2024etformer,
-      title={ET-Former: Efficient Triplane Deformable Attention for 3D Semantic Scene Completion From Monocular Camera}, 
-      author={\textbf{Jing Liang} and He Yin and Xuewei Qi and Jong Jin Park and Min Sun and Rajasimman Madhivanan and Dinesh Manocha},
+  title={ET-Former: Efficient Triplane Deformable Attention for 3D Semantic Scene Completion From Monocular Camera}, 
+  author={\textbf{Jing Liang} and He Yin and Xuewei Qi and Jong Jin Park and Min Sun and Rajasimman Madhivanan and Dinesh Manocha},
   booktitle={2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
   year={2025},
   organization={IEEE}
